@@ -1,0 +1,66 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #f4f6fb;
+    color: #222;
+}
+
+header {
+    background: #2d3a8c;
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+}
+
+main {
+    max-width: 800px;
+    margin: 30px auto;
+    padding: 0 16px;
+}
+
+.task {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.task h2 {
+    margin-top: 0;
+    color: #2d3a8c;
+}
+
+code {
+    background: #eef0f8;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.result {
+    font-weight: bold;
+    color: #1a7f37;
+}
+
+#phone-results li {
+    margin-bottom: 6px;
+}
+
+button {
+    margin-top: 10px;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    background: #2d3a8c;
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #1f2970;
+}
