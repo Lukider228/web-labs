@@ -472,3 +472,35 @@ h1 {
 .action label {
     padding: 6px 0;
 }
+
+/* ПР 3_1: дві кнопки атаки, журнал бою */
+.control {
+    flex-direction: column;
+    gap: 24px;
+}
+
+.button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.logo {
+    cursor: pointer;
+}
+
+.log {
+    max-width: 640px;
+    margin: 0 auto 30px;
+    padding: 10px 16px;
+    min-height: 40px;
+    list-style: none;
+    background: rgba(255, 255, 255, 0.75);
+    border-radius: 10px;
+    font-size: 15px;
+    text-align: left;
+}
+
+.log li {
+    padding: 3px 0;
+}
