@@ -1,115 +1,135 @@
-const $btnKick = document.getElementById('btn-kick');
-const $btnSpecial = document.getElementById('btn-special');
-const $logo = document.querySelector('.logo');
-const $log = document.getElementById('log');
+// ПР 3_2 Області видимості
+// весь код в IIFE, щоб змінні не попадали в глобальну область (window)
+(function () {
+    const $btnKick = document.getElementById('btn-kick');
+    const $btnSpecial = document.getElementById('btn-special');
+    const $logo = document.querySelector('.logo');
+    const $log = document.getElementById('log');
 
-// Герой
-const character = {
-    name: 'Pikachu',
-    defaultHP: 100,
-    damageHP: 100,
-    elHP: document.getElementById('health-character'),
-    elProgressbar: document.getElementById('progressbar-character'),
-};
+    // методи спільні для character і enemy
+    // this це той об'єкт, який викликав метод (character.renderHP() -> this = character)
 
-// Суперник
-const enemy = {
-    name: 'Charmander',
-    defaultHP: 100,
-    damageHP: 100,
-    elHP: document.getElementById('health-enemy'),
-    elProgressbar: document.getElementById('progressbar-enemy'),
-};
-
-// Випадкове число від 1 до num
-function random(num) {
-    return Math.ceil(Math.random() * num);
-}
-
-// Підпис з кількістю життя
-function renderHPLife(person) {
-    person.elHP.innerText = person.damageHP + ' / ' + person.defaultHP;
-}
-
-// Ширина та колір прогресбару
-function renderProgressbarHP(person) {
-    const percent = person.damageHP / person.defaultHP * 100;
-
-    person.elProgressbar.style.width = percent + '%';
-    person.elProgressbar.classList.toggle('low', percent <= 60 && percent > 20);
-    person.elProgressbar.classList.toggle('critical', percent <= 20);
-}
-
-// Перемальовуємо підпис і прогресбар однією функцією
-function renderHP(person) {
-    renderHPLife(person);
-    renderProgressbarHP(person);
-}
-
-// Наносимо удар: зменшуємо життя, але не нижче нуля
-function changeHP(count, person) {
-    person.damageHP = Math.max(person.damageHP - count, 0);
-    renderHP(person);
-    addLog(`${person.name} отримує ${count} шкоди (залишилось ${person.damageHP})`);
-}
-
-function addLog(text) {
-    const $li = document.createElement('li');
-    $li.innerText = text;
-    $log.prepend($li);
-}
-
-function setButtonsDisabled(disabled) {
-    $btnKick.disabled = disabled;
-    $btnSpecial.disabled = disabled;
-}
-
-function checkGameOver() {
-    if (character.damageHP > 0 && enemy.damageHP > 0) {
-        return;
+    function renderHPLife() {
+        this.elHP.innerText = this.damageHP + ' / ' + this.defaultHP;
     }
 
-    setButtonsDisabled(true);
+    function renderProgressbarHP() {
+        const percent = this.damageHP / this.defaultHP * 100;
 
-    let message;
-    if (character.damageHP === 0 && enemy.damageHP === 0) {
-        message = 'Нічия! Обидва покемони без сил.';
-    } else if (enemy.damageHP === 0) {
-        message = `${character.name} переміг!`;
-    } else {
-        message = `${enemy.name} переміг!`;
+        this.elProgressbar.style.width = percent + '%';
+        this.elProgressbar.classList.toggle('low', percent <= 60 && percent > 20);
+        this.elProgressbar.classList.toggle('critical', percent <= 20);
     }
 
-    addLog(message + ' Натисніть на логотип, щоб почати знову.');
-    setTimeout(() => alert(message), 50);
-}
+    function renderHP() {
+        this.renderHPLife();
+        this.renderProgressbarHP();
+    }
 
-// Раунд бою: обидва суперники отримують випадкову шкоду
-function fight(maxDamageToEnemy, maxDamageToCharacter) {
-    changeHP(random(maxDamageToEnemy), enemy);
-    changeHP(random(maxDamageToCharacter), character);
-    checkGameOver();
-}
+    function changeHP(count) {
+        this.damageHP = Math.max(this.damageHP - count, 0);
+        this.renderHP();
+        addLog(`${this.name} отримує ${count} шкоди (залишилось ${this.damageHP})`);
+    }
 
-function resetGame() {
-    character.damageHP = character.defaultHP;
-    enemy.damageHP = enemy.defaultHP;
-    renderHP(character);
-    renderHP(enemy);
-    $log.innerHTML = '';
-    setButtonsDisabled(false);
-}
+    function reset() {
+        this.damageHP = this.defaultHP;
+        this.renderHP();
+    }
 
-// Thunder Jolt звичайна атака, обидва б'ють до 20
-$btnKick.addEventListener('click', () => {
-    fight(20, 20);
-});
+    function isAlive() {
+        return this.damageHP > 0;
+    }
 
-// Electro Ball б'є сильніше (до 35), але і у відповідь прилітає більше (до 25)
-$btnSpecial.addEventListener('click', () => {
-    fight(35, 25);
-});
+    // об'єкти
 
-$logo.addEventListener('click', resetGame);
+    const character = {
+        name: 'Pikachu',
+        defaultHP: 100,
+        damageHP: 100,
+        elHP: document.getElementById('health-character'),
+        elProgressbar: document.getElementById('progressbar-character'),
+        renderHPLife,
+        renderProgressbarHP,
+        renderHP,
+        changeHP,
+        reset,
+        isAlive,
+    };
 
-resetGame();
+    const enemy = {
+        name: 'Charmander',
+        defaultHP: 100,
+        damageHP: 100,
+        elHP: document.getElementById('health-enemy'),
+        elProgressbar: document.getElementById('progressbar-enemy'),
+        renderHPLife,
+        renderProgressbarHP,
+        renderHP,
+        changeHP,
+        reset,
+        isAlive,
+    };
+
+    // допоміжні функції
+
+    // Function Expression, створюється тільки коли до неї дійде код
+    const random = function (num) {
+        return Math.ceil(Math.random() * num);
+    };
+
+    function addLog(text) {
+        const $li = document.createElement('li');
+        $li.innerText = text;
+        $log.prepend($li);
+    }
+
+    function setButtonsDisabled(disabled) {
+        $btnKick.disabled = disabled;
+        $btnSpecial.disabled = disabled;
+    }
+
+    function checkGameOver() {
+        if (character.isAlive() && enemy.isAlive()) {
+            return;
+        }
+
+        setButtonsDisabled(true);
+
+        let message;
+        if (!character.isAlive() && !enemy.isAlive()) {
+            message = 'Нічия! Обидва покемони без сил.';
+        } else if (!enemy.isAlive()) {
+            message = `${character.name} переміг!`;
+        } else {
+            message = `${enemy.name} переміг!`;
+        }
+
+        addLog(message + ' Натисніть на логотип, щоб почати знову.');
+        setTimeout(() => alert(message), 50);
+    }
+
+    // Раунд бою: обидва суперники отримують випадкову шкоду
+    function fight(maxDamageToEnemy, maxDamageToCharacter) {
+        enemy.changeHP(random(maxDamageToEnemy));
+        character.changeHP(random(maxDamageToCharacter));
+        checkGameOver();
+    }
+
+    function resetGame() {
+        character.reset();
+        enemy.reset();
+        $log.innerHTML = '';
+        setButtonsDisabled(false);
+    }
+
+    // Thunder Jolt звичайна атака, обидва б'ють до 20
+    $btnKick.addEventListener('click', () => fight(20, 20));
+
+    // Electro Ball б'є сильніше (до 35), але і у відповідь прилітає більше (до 25)
+    $btnSpecial.addEventListener('click', () => fight(35, 25));
+
+    $logo.addEventListener('click', resetGame);
+
+    resetGame();
+})();
