@@ -494,6 +494,8 @@ h1 {
     margin: 0 auto 30px;
     padding: 10px 16px;
     min-height: 40px;
+    max-height: 130px;
+    overflow-y: auto;
     list-style: none;
     background: rgba(255, 255, 255, 0.75);
     border-radius: 10px;
