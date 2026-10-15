@@ -1,24 +1,22 @@
-// ПР 3_2 Області видимості
-// весь код в IIFE, щоб змінні не попадали в глобальну область (window)
+// ПР 3_3 Робота з DOM, деструктуризація, лог бою
 (function () {
     const $btnKick = document.getElementById('btn-kick');
     const $btnSpecial = document.getElementById('btn-special');
     const $logo = document.querySelector('.logo');
-    const $log = document.getElementById('log');
-
-    // методи спільні для character і enemy
-    // this це той об'єкт, який викликав метод (character.renderHP() -> this = character)
+    const $logs = document.getElementById('logs');
 
     function renderHPLife() {
-        this.elHP.innerText = this.damageHP + ' / ' + this.defaultHP;
+        const { elHP, damageHP, defaultHP } = this;
+        elHP.innerText = damageHP + ' / ' + defaultHP;
     }
 
     function renderProgressbarHP() {
-        const percent = this.damageHP / this.defaultHP * 100;
+        const { elProgressbar, damageHP, defaultHP } = this;
+        const percent = damageHP / defaultHP * 100;
 
-        this.elProgressbar.style.width = percent + '%';
-        this.elProgressbar.classList.toggle('low', percent <= 60 && percent > 20);
-        this.elProgressbar.classList.toggle('critical', percent <= 20);
+        elProgressbar.style.width = percent + '%';
+        elProgressbar.classList.toggle('low', percent <= 60 && percent > 20);
+        elProgressbar.classList.toggle('critical', percent <= 20);
     }
 
     function renderHP() {
@@ -26,10 +24,10 @@
         this.renderProgressbarHP();
     }
 
-    function changeHP(count) {
+    function changeHP(count, attacker) {
         this.damageHP = Math.max(this.damageHP - count, 0);
         this.renderHP();
-        addLog(`${this.name} отримує ${count} шкоди (залишилось ${this.damageHP})`);
+        addLog(generateLog(this, attacker, count));
     }
 
     function reset() {
@@ -41,7 +39,7 @@
         return this.damageHP > 0;
     }
 
-    // об'єкти
+    const methods = { renderHPLife, renderProgressbarHP, renderHP, changeHP, reset, isAlive };
 
     const character = {
         name: 'Pikachu',
@@ -49,12 +47,7 @@
         damageHP: 100,
         elHP: document.getElementById('health-character'),
         elProgressbar: document.getElementById('progressbar-character'),
-        renderHPLife,
-        renderProgressbarHP,
-        renderHP,
-        changeHP,
-        reset,
-        isAlive,
+        ...methods,
     };
 
     const enemy = {
@@ -63,30 +56,39 @@
         damageHP: 100,
         elHP: document.getElementById('health-enemy'),
         elProgressbar: document.getElementById('progressbar-enemy'),
-        renderHPLife,
-        renderProgressbarHP,
-        renderHP,
-        changeHP,
-        reset,
-        isAlive,
+        ...methods,
     };
 
-    // допоміжні функції
-
-    // Function Expression, створюється тільки коли до неї дійде код
     const random = function (num) {
         return Math.ceil(Math.random() * num);
     };
 
+    function generateLog({ name, damageHP, defaultHP }, { name: attackerName }, count) {
+        const logs = [
+            `${name} згадав щось важливе, але несподівано ${attackerName}, не тямлячи себе від переляку, вдарив у передпліччя ворога.`,
+            `${name} поперхнувся, і за це ${attackerName} з переляку наніс прямий удар коліном у лоб ворога.`,
+            `${name} забувся, але в цей час нахабний ${attackerName}, прийнявши вольове рішення, нечутно підійшовши ззаду, вдарив.`,
+            `${name} прийшов до тями, але несподівано ${attackerName} випадково наніс найпотужніший удар.`,
+            `${name} поперхнувся, але в цей час ${attackerName} неохоче роздробив кулаком <вирізано цензурою> противника.`,
+            `${name} здивувався, а ${attackerName}, похитнувшись, вліпив підлий удар.`,
+            `${name} висякався, але несподівано ${attackerName} провів дроблячий удар.`,
+            `${name} похитнувся, і раптом нахабний ${attackerName} без причини вдарив у ногу противника.`,
+            `${name} засмутився, як раптом несподівано ${attackerName} випадково вліпив стопою в живіт суперника.`,
+            `${name} намагався щось сказати, але раптом несподівано ${attackerName} від нудьги розбив брову супернику.`,
+        ];
+        const text = logs[random(logs.length) - 1];
+
+        return `${text} -${count} [${damageHP}/${defaultHP}]`;
+    }
+
     function addLog(text) {
-        const $li = document.createElement('li');
-        $li.innerText = text;
-        $log.prepend($li);
+        const $p = document.createElement('p');
+        $p.innerText = text;
+        $logs.insertBefore($p, $logs.children[0]);
     }
 
     function setButtonsDisabled(disabled) {
-        $btnKick.disabled = disabled;
-        $btnSpecial.disabled = disabled;
+        [$btnKick.disabled, $btnSpecial.disabled] = [disabled, disabled];
     }
 
     function checkGameOver() {
@@ -109,26 +111,27 @@
         setTimeout(() => alert(message), 50);
     }
 
-    // Раунд бою: обидва суперники отримують випадкову шкоду
-    function fight(maxDamageToEnemy, maxDamageToCharacter) {
-        enemy.changeHP(random(maxDamageToEnemy));
-        character.changeHP(random(maxDamageToCharacter));
+    function fight({ toEnemy, toCharacter }) {
+        enemy.changeHP(random(toEnemy), character);
+        character.changeHP(random(toCharacter), enemy);
         checkGameOver();
     }
 
     function resetGame() {
         character.reset();
         enemy.reset();
-        $log.innerHTML = '';
+        $logs.innerHTML = '';
         setButtonsDisabled(false);
     }
 
-    // Thunder Jolt звичайна атака, обидва б'ють до 20
-    $btnKick.addEventListener('click', () => fight(20, 20));
+    const attacks = {
+        kick: { toEnemy: 20, toCharacter: 20 },
+        special: { toEnemy: 35, toCharacter: 25 },
+    };
+    const { kick, special } = attacks;
 
-    // Electro Ball б'є сильніше (до 35), але і у відповідь прилітає більше (до 25)
-    $btnSpecial.addEventListener('click', () => fight(35, 25));
-
+    $btnKick.addEventListener('click', () => fight(kick));
+    $btnSpecial.addEventListener('click', () => fight(special));
     $logo.addEventListener('click', resetGame);
 
     resetGame();
