@@ -1,4 +1,4 @@
-// ПР 3_3 Робота з DOM, деструктуризація, лог бою
+// ПР 3_4 Стрілочні функції, замикання
 (function () {
     const $btnKick = document.getElementById('btn-kick');
     const $btnSpecial = document.getElementById('btn-special');
@@ -59,9 +59,7 @@
         ...methods,
     };
 
-    const random = function (num) {
-        return Math.ceil(Math.random() * num);
-    };
+    const random = (num) => Math.ceil(Math.random() * num);
 
     function generateLog({ name, damageHP, defaultHP }, { name: attackerName }, count) {
         const logs = [
@@ -81,17 +79,37 @@
         return `${text} -${count} [${damageHP}/${defaultHP}]`;
     }
 
-    function addLog(text) {
+    const addLog = (text) => {
         const $p = document.createElement('p');
         $p.innerText = text;
         $logs.insertBefore($p, $logs.children[0]);
-    }
+    };
 
-    function setButtonsDisabled(disabled) {
+    const setButtonsDisabled = (disabled) => {
         [$btnKick.disabled, $btnSpecial.disabled] = [disabled, disabled];
-    }
+    };
 
-    function checkGameOver() {
+    const clickCounter = ($btn, limit = 6) => {
+        const name = $btn.dataset.name || $btn.innerText;
+        $btn.dataset.name = name;
+        $btn.innerText = `${name} (${limit})`;
+        let count = 0;
+
+        return () => {
+            count++;
+            const left = limit - count;
+            console.log(`${name}: натискань ${count}, залишилось ${left}`);
+            $btn.innerText = `${name} (${left})`;
+            if (left <= 0) {
+                $btn.disabled = true;
+            }
+        };
+    };
+
+    let kickClick;
+    let specialClick;
+
+    const checkGameOver = () => {
         if (character.isAlive() && enemy.isAlive()) {
             return;
         }
@@ -109,20 +127,22 @@
 
         addLog(message + ' Натисніть на логотип, щоб почати знову.');
         setTimeout(() => alert(message), 50);
-    }
+    };
 
-    function fight({ toEnemy, toCharacter }) {
+    const fight = ({ toEnemy, toCharacter }) => {
         enemy.changeHP(random(toEnemy), character);
         character.changeHP(random(toCharacter), enemy);
         checkGameOver();
-    }
+    };
 
-    function resetGame() {
+    const resetGame = () => {
         character.reset();
         enemy.reset();
         $logs.innerHTML = '';
         setButtonsDisabled(false);
-    }
+        kickClick = clickCounter($btnKick);
+        specialClick = clickCounter($btnSpecial);
+    };
 
     const attacks = {
         kick: { toEnemy: 20, toCharacter: 20 },
@@ -130,8 +150,14 @@
     };
     const { kick, special } = attacks;
 
-    $btnKick.addEventListener('click', () => fight(kick));
-    $btnSpecial.addEventListener('click', () => fight(special));
+    $btnKick.addEventListener('click', () => {
+        kickClick();
+        fight(kick);
+    });
+    $btnSpecial.addEventListener('click', () => {
+        specialClick();
+        fight(special);
+    });
     $logo.addEventListener('click', resetGame);
 
     resetGame();
