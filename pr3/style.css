@@ -476,7 +476,13 @@ h1 {
 /* ПР 3_1: дві кнопки атаки, журнал бою */
 .control {
     flex-direction: column;
-    gap: 24px;
+    gap: 14px;
+}
+
+.control .button {
+    font-size: 15px;
+    padding: 8px 16px;
+    text-transform: capitalize;
 }
 
 .button:disabled {

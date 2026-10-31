@@ -1,4 +1,4 @@
-import random from './utils.js';
+import { random } from './utils.js';
 
 const $logs = document.getElementById('logs');
 
@@ -15,7 +15,7 @@ export function generateLog({ name, damageHP, defaultHP }, { name: attackerName 
         `${name} засмутився, як раптом несподівано ${attackerName} випадково вліпив стопою в живіт суперника.`,
         `${name} намагався щось сказати, але раптом несподівано ${attackerName} від нудьги розбив брову супернику.`,
     ];
-    const text = logs[random(logs.length) - 1];
+    const text = logs[random(logs.length - 1)];
 
     return `${text} -${count} [${damageHP}/${defaultHP}]`;
 }

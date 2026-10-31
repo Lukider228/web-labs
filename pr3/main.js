@@ -1,49 +1,43 @@
-// ПР 3_5 Модулі. Класи
+// ПР 3_6 Робота з масивами
 import Pokemon from './pokemon.js';
-import random from './utils.js';
+import { random, countBtn } from './utils.js';
 import { generateLog, addLog, clearLogs } from './logs.js';
+import { pokemons } from './pokemons.js';
 
-const $btnKick = document.getElementById('btn-kick');
-const $btnSpecial = document.getElementById('btn-special');
+const $control = document.querySelector('.control');
 const $logo = document.querySelector('.logo');
 
-const player1 = new Pokemon({
-    name: 'Pikachu',
-    hp: 100,
-    selectors: 'character',
-});
+let player1;
+let player2;
+let enemyAttacks;
 
-const player2 = new Pokemon({
-    name: 'Charmander',
-    hp: 100,
-    selectors: 'enemy',
-});
+const getRandomPokemon = (exceptName) => {
+    const list = pokemons.filter(item => item.name !== exceptName);
+    return list[random(list.length - 1)];
+};
 
-console.log(player1, player2);
+const removeButtons = () => {
+    const allButtons = document.querySelectorAll('.control .button');
+    allButtons.forEach($item => $item.remove());
+};
 
 const setButtonsDisabled = (disabled) => {
-    [$btnKick.disabled, $btnSpecial.disabled] = [disabled, disabled];
+    const allButtons = document.querySelectorAll('.control .button');
+    allButtons.forEach($item => $item.disabled = disabled);
 };
 
-const clickCounter = ($btn, limit = 6) => {
-    const name = $btn.dataset.name || $btn.innerText;
-    $btn.dataset.name = name;
-    $btn.innerText = `${name} (${limit})`;
-    let count = 0;
-
-    return () => {
-        count++;
-        const left = limit - count;
-        console.log(`${name}: натискань ${count}, залишилось ${left}`);
-        $btn.innerText = `${name} (${left})`;
-        if (left <= 0) {
-            $btn.disabled = true;
-        }
-    };
+const attackLog = (defender, attacker) => (count) => {
+    const log = generateLog(defender, attacker, count);
+    console.log(log);
+    addLog(log);
 };
 
-let kickClick;
-let specialClick;
+const enemyAttack = () => {
+    const attack = enemyAttacks.find(item => item.count > 0);
+    attack.count--;
+    console.log(`${player2.name} б'є: ${attack.name}`);
+    player1.changeHP(random(attack.maxDamage, attack.minDamage), attackLog(player1, player2));
+};
 
 const checkGameOver = () => {
     if (player1.isAlive() && player2.isAlive()) {
@@ -52,56 +46,48 @@ const checkGameOver = () => {
 
     setButtonsDisabled(true);
 
-    let message;
-    if (!player1.isAlive() && !player2.isAlive()) {
-        message = 'Нічия! Обидва покемони без сил.';
-    } else if (!player2.isAlive()) {
-        message = `${player1.name} переміг!`;
-    } else {
-        message = `${player2.name} переміг!`;
-    }
-
+    const message = player1.isAlive() ? `${player1.name} переміг!` : `${player2.name} переміг!`;
     addLog(message + ' Натисніть на логотип, щоб почати знову.');
     setTimeout(() => alert(message), 50);
 };
 
-const fight = ({ toEnemy, toCharacter }) => {
-    player2.changeHP(random(toEnemy), (count) => {
-        const log = generateLog(player2, player1, count);
-        console.log(log);
-        addLog(log);
-    });
-    player1.changeHP(random(toCharacter), (count) => {
-        const log = generateLog(player1, player2, count);
-        console.log(log);
-        addLog(log);
-    });
-    checkGameOver();
-};
+const startGame = () => {
+    const pokemon1 = getRandomPokemon();
+    const pokemon2 = getRandomPokemon(pokemon1.name);
 
-const resetGame = () => {
-    player1.reset();
-    player2.reset();
+    player1 = new Pokemon({
+        ...pokemon1,
+        selectors: 'player1',
+    });
+    player2 = new Pokemon({
+        ...pokemon2,
+        selectors: 'player2',
+    });
+    console.log(player1, player2);
+
+    enemyAttacks = player2.attacks.map(item => ({ ...item, count: item.maxCount }));
+
     clearLogs();
-    setButtonsDisabled(false);
-    kickClick = clickCounter($btnKick);
-    specialClick = clickCounter($btnSpecial);
+    removeButtons();
+
+    player1.attacks.forEach(item => {
+        const $btn = document.createElement('button');
+        $btn.classList.add('button');
+        $btn.innerText = item.name;
+        const btnCount = countBtn(item.maxCount, $btn);
+        $btn.addEventListener('click', () => {
+            console.log('Click button ', $btn.innerText);
+            btnCount();
+            player2.changeHP(random(item.maxDamage, item.minDamage), attackLog(player2, player1));
+            if (player2.isAlive()) {
+                enemyAttack();
+            }
+            checkGameOver();
+        });
+        $control.appendChild($btn);
+    });
 };
 
-const attacks = {
-    kick: { toEnemy: 20, toCharacter: 20 },
-    special: { toEnemy: 35, toCharacter: 25 },
-};
-const { kick, special } = attacks;
+$logo.addEventListener('click', startGame);
 
-$btnKick.addEventListener('click', () => {
-    kickClick();
-    fight(kick);
-});
-$btnSpecial.addEventListener('click', () => {
-    specialClick();
-    fight(special);
-});
-$logo.addEventListener('click', resetGame);
-
-resetGame();
+startGame();
