@@ -1,164 +1,107 @@
-// ПР 3_4 Стрілочні функції, замикання
-(function () {
-    const $btnKick = document.getElementById('btn-kick');
-    const $btnSpecial = document.getElementById('btn-special');
-    const $logo = document.querySelector('.logo');
-    const $logs = document.getElementById('logs');
+// ПР 3_5 Модулі. Класи
+import Pokemon from './pokemon.js';
+import random from './utils.js';
+import { generateLog, addLog, clearLogs } from './logs.js';
 
-    function renderHPLife() {
-        const { elHP, damageHP, defaultHP } = this;
-        elHP.innerText = damageHP + ' / ' + defaultHP;
-    }
+const $btnKick = document.getElementById('btn-kick');
+const $btnSpecial = document.getElementById('btn-special');
+const $logo = document.querySelector('.logo');
 
-    function renderProgressbarHP() {
-        const { elProgressbar, damageHP, defaultHP } = this;
-        const percent = damageHP / defaultHP * 100;
+const player1 = new Pokemon({
+    name: 'Pikachu',
+    hp: 100,
+    selectors: 'character',
+});
 
-        elProgressbar.style.width = percent + '%';
-        elProgressbar.classList.toggle('low', percent <= 60 && percent > 20);
-        elProgressbar.classList.toggle('critical', percent <= 20);
-    }
+const player2 = new Pokemon({
+    name: 'Charmander',
+    hp: 100,
+    selectors: 'enemy',
+});
 
-    function renderHP() {
-        this.renderHPLife();
-        this.renderProgressbarHP();
-    }
+console.log(player1, player2);
 
-    function changeHP(count, attacker) {
-        this.damageHP = Math.max(this.damageHP - count, 0);
-        this.renderHP();
-        addLog(generateLog(this, attacker, count));
-    }
+const setButtonsDisabled = (disabled) => {
+    [$btnKick.disabled, $btnSpecial.disabled] = [disabled, disabled];
+};
 
-    function reset() {
-        this.damageHP = this.defaultHP;
-        this.renderHP();
-    }
+const clickCounter = ($btn, limit = 6) => {
+    const name = $btn.dataset.name || $btn.innerText;
+    $btn.dataset.name = name;
+    $btn.innerText = `${name} (${limit})`;
+    let count = 0;
 
-    function isAlive() {
-        return this.damageHP > 0;
-    }
-
-    const methods = { renderHPLife, renderProgressbarHP, renderHP, changeHP, reset, isAlive };
-
-    const character = {
-        name: 'Pikachu',
-        defaultHP: 100,
-        damageHP: 100,
-        elHP: document.getElementById('health-character'),
-        elProgressbar: document.getElementById('progressbar-character'),
-        ...methods,
-    };
-
-    const enemy = {
-        name: 'Charmander',
-        defaultHP: 100,
-        damageHP: 100,
-        elHP: document.getElementById('health-enemy'),
-        elProgressbar: document.getElementById('progressbar-enemy'),
-        ...methods,
-    };
-
-    const random = (num) => Math.ceil(Math.random() * num);
-
-    function generateLog({ name, damageHP, defaultHP }, { name: attackerName }, count) {
-        const logs = [
-            `${name} згадав щось важливе, але несподівано ${attackerName}, не тямлячи себе від переляку, вдарив у передпліччя ворога.`,
-            `${name} поперхнувся, і за це ${attackerName} з переляку наніс прямий удар коліном у лоб ворога.`,
-            `${name} забувся, але в цей час нахабний ${attackerName}, прийнявши вольове рішення, нечутно підійшовши ззаду, вдарив.`,
-            `${name} прийшов до тями, але несподівано ${attackerName} випадково наніс найпотужніший удар.`,
-            `${name} поперхнувся, але в цей час ${attackerName} неохоче роздробив кулаком <вирізано цензурою> противника.`,
-            `${name} здивувався, а ${attackerName}, похитнувшись, вліпив підлий удар.`,
-            `${name} висякався, але несподівано ${attackerName} провів дроблячий удар.`,
-            `${name} похитнувся, і раптом нахабний ${attackerName} без причини вдарив у ногу противника.`,
-            `${name} засмутився, як раптом несподівано ${attackerName} випадково вліпив стопою в живіт суперника.`,
-            `${name} намагався щось сказати, але раптом несподівано ${attackerName} від нудьги розбив брову супернику.`,
-        ];
-        const text = logs[random(logs.length) - 1];
-
-        return `${text} -${count} [${damageHP}/${defaultHP}]`;
-    }
-
-    const addLog = (text) => {
-        const $p = document.createElement('p');
-        $p.innerText = text;
-        $logs.insertBefore($p, $logs.children[0]);
-    };
-
-    const setButtonsDisabled = (disabled) => {
-        [$btnKick.disabled, $btnSpecial.disabled] = [disabled, disabled];
-    };
-
-    const clickCounter = ($btn, limit = 6) => {
-        const name = $btn.dataset.name || $btn.innerText;
-        $btn.dataset.name = name;
-        $btn.innerText = `${name} (${limit})`;
-        let count = 0;
-
-        return () => {
-            count++;
-            const left = limit - count;
-            console.log(`${name}: натискань ${count}, залишилось ${left}`);
-            $btn.innerText = `${name} (${left})`;
-            if (left <= 0) {
-                $btn.disabled = true;
-            }
-        };
-    };
-
-    let kickClick;
-    let specialClick;
-
-    const checkGameOver = () => {
-        if (character.isAlive() && enemy.isAlive()) {
-            return;
+    return () => {
+        count++;
+        const left = limit - count;
+        console.log(`${name}: натискань ${count}, залишилось ${left}`);
+        $btn.innerText = `${name} (${left})`;
+        if (left <= 0) {
+            $btn.disabled = true;
         }
-
-        setButtonsDisabled(true);
-
-        let message;
-        if (!character.isAlive() && !enemy.isAlive()) {
-            message = 'Нічия! Обидва покемони без сил.';
-        } else if (!enemy.isAlive()) {
-            message = `${character.name} переміг!`;
-        } else {
-            message = `${enemy.name} переміг!`;
-        }
-
-        addLog(message + ' Натисніть на логотип, щоб почати знову.');
-        setTimeout(() => alert(message), 50);
     };
+};
 
-    const fight = ({ toEnemy, toCharacter }) => {
-        enemy.changeHP(random(toEnemy), character);
-        character.changeHP(random(toCharacter), enemy);
-        checkGameOver();
-    };
+let kickClick;
+let specialClick;
 
-    const resetGame = () => {
-        character.reset();
-        enemy.reset();
-        $logs.innerHTML = '';
-        setButtonsDisabled(false);
-        kickClick = clickCounter($btnKick);
-        specialClick = clickCounter($btnSpecial);
-    };
+const checkGameOver = () => {
+    if (player1.isAlive() && player2.isAlive()) {
+        return;
+    }
 
-    const attacks = {
-        kick: { toEnemy: 20, toCharacter: 20 },
-        special: { toEnemy: 35, toCharacter: 25 },
-    };
-    const { kick, special } = attacks;
+    setButtonsDisabled(true);
 
-    $btnKick.addEventListener('click', () => {
-        kickClick();
-        fight(kick);
+    let message;
+    if (!player1.isAlive() && !player2.isAlive()) {
+        message = 'Нічия! Обидва покемони без сил.';
+    } else if (!player2.isAlive()) {
+        message = `${player1.name} переміг!`;
+    } else {
+        message = `${player2.name} переміг!`;
+    }
+
+    addLog(message + ' Натисніть на логотип, щоб почати знову.');
+    setTimeout(() => alert(message), 50);
+};
+
+const fight = ({ toEnemy, toCharacter }) => {
+    player2.changeHP(random(toEnemy), (count) => {
+        const log = generateLog(player2, player1, count);
+        console.log(log);
+        addLog(log);
     });
-    $btnSpecial.addEventListener('click', () => {
-        specialClick();
-        fight(special);
+    player1.changeHP(random(toCharacter), (count) => {
+        const log = generateLog(player1, player2, count);
+        console.log(log);
+        addLog(log);
     });
-    $logo.addEventListener('click', resetGame);
+    checkGameOver();
+};
 
-    resetGame();
-})();
+const resetGame = () => {
+    player1.reset();
+    player2.reset();
+    clearLogs();
+    setButtonsDisabled(false);
+    kickClick = clickCounter($btnKick);
+    specialClick = clickCounter($btnSpecial);
+};
+
+const attacks = {
+    kick: { toEnemy: 20, toCharacter: 20 },
+    special: { toEnemy: 35, toCharacter: 25 },
+};
+const { kick, special } = attacks;
+
+$btnKick.addEventListener('click', () => {
+    kickClick();
+    fight(kick);
+});
+$btnSpecial.addEventListener('click', () => {
+    specialClick();
+    fight(special);
+});
+$logo.addEventListener('click', resetGame);
+
+resetGame();
